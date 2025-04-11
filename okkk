@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Giliran JKM Serdang Kedah</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    .counter {
+      font-size: 10em;
+      color: #2c3e50;
+      margin: 20px 0;
+    }
+    button {
+      font-size: 2em;
+      padding: 10px 40px;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .kaunter {
+      font-size: 2em;
+      margin-top: 20px;
+    }
+    select {
+      font-size: 1.2em;
+      padding: 5px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>SISTEM GILIRAN<br>JABATAN KEBAJIKAN MASYARAKAT<br>SERDANG, KEDAH</h1>
+  <div class="counter" id="currentNumber">001</div>
+  <div class="kaunter">
+    Kaunter:
+    <select id="kaunterSelect" onchange="updateKaunter()">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+    </select>
+    <span id="kaunter">1</span>
+  </div>
+  <div>
+    <button onclick="nextNumber()">Giliran Seterusnya</button>
+    <button onclick="resetNumber()">Reset</button>
+  </div>
+
+  <audio id="ding" src="https://www.soundjay.com/buttons/sounds/button-16.mp3" preload="auto"></audio>
+
+  <script>
+    let number = localStorage.getItem('giliran') || '001';
+    let kaunter = localStorage.getItem('kaunter') || '1';
+
+    const display = document.getElementById('currentNumber');
+    const kaunterDisplay = document.getElementById('kaunter');
+    const kaunterSelect = document.getElementById('kaunterSelect');
+    const ding = document.getElementById('ding');
+
+    kaunterSelect.value = kaunter;
+
+    function padNumber(num) {
+      return num.toString().padStart(3, '0');
+    }
+
+    function updateDisplay() {
+      display.textContent = number;
+      kaunterDisplay.textContent = kaunter;
+      localStorage.setItem('giliran', number);
+      localStorage.setItem('kaunter', kaunter);
+    }
+
+    function nextNumber() {
+      number = padNumber(parseInt(number) + 1);
+      ding.play();
+      updateDisplay();
+    }
+
+    function resetNumber() {
+      number = '001';
+      updateDisplay();
+    }
+
+    function updateKaunter() {
+      kaunter = kaunterSelect.value;
+      updateDisplay();
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>

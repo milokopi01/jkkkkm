@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ms-MY">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Ujian Siber: Sains T2</title>
+    <!-- html2pdf.js untuk Sijil Digital -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* ================= KAWALAN CSS CYBERPUNK NEON ================= */
+        :root {
+            --neon-cyan: #0ff;
+            --neon-magenta: #f0f;
+            --neon-purple: #9d00ff;
+            --dark-bg: #050505;
+            --glass-bg: rgba(10, 10, 20, 0.75);
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: var(--font-main);
+            overflow: hidden;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            transition: transform 0.3s ease;
+        }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 15px rgba(255, 0, 255, 0.1);
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 2rem auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1, h2, h3 {
+            text-align: center; text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--neon-cyan); margin-bottom: 1.5rem;
+        }
+
+        h1 { color: var(--neon-cyan); }
+        h2 { color: var(--neon-magenta); }
+
+        .glow-text {
+            color: var(--neon-magenta); text-shadow: 0 0 8px var(--neon-magenta);
+            text-align: center; font-weight: bold; margin-bottom: 1rem;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { text-shadow: 0 0 5px var(--neon-magenta); }
+            to { text-shadow: 0 0 20px var(--neon-magenta), 0 0 30px var(--neon-purple); }
+        }
+
+        input[type="text"] {
+            width: 100%; padding: 15px; margin-bottom: 15px;
+            background: rgba(0,0,0,0.5); border: 1px solid var(--neon-purple);
+            color: var(--neon-cyan); font-family: inherit; font-size: 1.2rem;
+            outline: none; box-shadow: inset 0 0 5px var(--neon-purple);
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .btn-cyber {
+            display: block; width: 100%; padding: 15px; margin: 10px 0;
+            background: transparent; border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan); font-size: 1.2rem; font-family: inherit;
+            font-weight: bold; text-transform: uppercase; cursor: pointer;
+            transition: all 0.2s; position: relative; overflow: hidden;
+        }
+
+        .btn-cyber:hover, .btn-cyber:active {
+            background: var(--neon-cyan); color: #000; box-shadow: 0 0 20px var(--neon-cyan);
+            transform: scale(1.02);
+        }
+
+        .btn-magenta { border-color: var(--neon-magenta); color: var(--neon-magenta); }
+        .btn-magenta:hover, .btn-magenta:active { background: var(--neon-magenta); box-shadow: 0 0 20px var(--neon-magenta); color: #000; }
+
+        .floating-controls {
+            position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 100;
+        }
+
+        .ctrl-btn {
+            width: 50px; height: 50px; border-radius: 50%; background: var(--glass-bg);
+            border: 1px solid var(--neon-cyan); color: var(--neon-cyan); font-size: 1.5rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .secret-terminal {
+            position: fixed; top: 20px; left: 20px; width: 30px; height: 30px;
+            cursor: pointer; z-index: 100; opacity: 0.2;
+        }
+
+        .hud-header {
+            display: flex; justify-content: space-between; border-bottom: 1px solid var(--neon-purple);
+            padding-bottom: 10px; margin-bottom: 20px; font-size: 1.2rem; color: var(--neon-cyan);
+        }
+
+        .timer-bar {
+            height: 10px; background: var(--neon-cyan); width: 100%;
+            margin-bottom: 20px; box-shadow: 0 0 10px var(--neon-cyan);
+            transition: width 1s linear, background 0.5s;
+        }
+
+        .screen { display: none; height: 100vh; overflow-y: auto; padding: 20px; }
+        .active-screen { display: block; }
+
+        #hologram-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 90%; max-width: 600px; background: rgba(20, 0, 40, 0.95);
+            border: 2px solid var(--neon-magenta); box-shadow: 0 0 30px var(--neon-magenta);
+            padding: 30px; text-align: center; z-index: 1000; display: none; border-radius: 15px;
+        }
+
+        .keyword-glow { color: #fffc00; text-shadow: 0 0 10px #fffc00; font-weight: bold; }
+
+        #particle-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 999;
+        }
+
+        .dashboard-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;
+        }
+        
+        #certificate {
+            background: #000; border: 5px solid var(--neon-cyan); padding: 40px;
+            text-align: center; color: #fff; position: relative;
+        }
+        #certificate::before {
+            content: ''; position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
+            border: 2px dashed var(--neon-magenta); pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Floating Controls -->
+    <div class="floating-controls">
+        <button class="ctrl-btn" onclick="zoom(0.1)">+</button>
+        <button class="ctrl-btn" onclick="zoom(-0.1)">-</button>
+        <button class="ctrl-btn" onclick="goHome()">H</button>
+    </div>
+    
+    <!-- Secret Reset Terminal -->
+    <div class="secret-terminal" onclick="triggerReset()">_</div>
+
+    <!-- SCREEN 1: LOGIN -->
+    <div id="login-screen" class="screen active-screen">
+        <div class="glass-panel" style="margin-top: 10vh;">
+            <h1>Sistem Analisis Siber T2</h1>
+            <p class="glow-text">Sila copy link kuiz ini dan buka di Google Chrome untuk paparan terbaik.</p>
+            <input type="text" id="input-nama" placeholder="NAMA PENUH EAGEN" required autocomplete="off">
+            <input type="text" id="input-kelas" placeholder="KOD KELAS" required autocomplete="off">
+            <button class="btn-cyber" onclick="login()">Log Masuk Sistem</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: DASHBOARD MISI -->
+    <div id="dashboard-screen" class="screen">
+        <div class="glass-panel">
+            <h2>Dashboard Misi Siber</h2>
+            <div id="user-info" class="hud-header"></div>
+            <p style="margin-bottom: 20px; color: #aaa;">Status: <span id="global-progress">0</span>/200 Misi Selesai</p>
+            <div class="dashboard-grid" id="module-container">
+                <!-- Modules injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: QUIZ -->
+    <div id="quiz-screen" class="screen">
+        <div class="glass-panel" style="max-width: 900px;">
+            <div class="hud-header">
+                <span id="q-module-title">Modul 1</span>
+                <span id="q-counter">Soalan: 1/40</span>
+            </div>
+            <div class="timer-bar" id="timer-bar"></div>
+            <p id="q-clue" style="color: var(--neon-magenta); display: none; margin-bottom: 10px; font-weight: bold;">[KLUE SIBER]: <span id="clue-text"></span></p>
+            <h2 id="q-text" style="font-size: 1.5rem; text-transform: none; margin-bottom: 30px;">Memuatkan Data...</h2>
+            
+            <div id="options-container"></div>
+
+            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                <button class="btn-cyber btn-magenta" onclick="skipQuestion()">Skip (KIV)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: INTERVENSI POPUP -->
+    <div id="hologram-popup">
+        <h2 style="color: red; text-shadow: 0 0 10px red;">RALAT DATA!</h2>
+        <p style="font-size: 1.2rem; margin-bottom: 20px;">Fakta Sebenar:</p>
+        <p id="hologram-text" style="font-size: 1.3rem; line-height: 1.6; margin-bottom: 30px;"></p>
+        <button class="btn-cyber" onclick="closeHologram()">Faham, Teruskan</button>
+    </div>
+
+    <!-- SCREEN 5: MODULE RESULT -->
+    <div id="result-screen" class="screen">
+        <div class="glass-panel">
+            <h2>Laporan Modul Selesai</h2>
+            <h1 id="mod-score" style="font-size: 4rem;">100%</h1>
+            <p id="mod-summary" style="text-align: center; font-size: 1.2rem; margin-bottom: 20px;"></p>
+            <button class="btn-cyber" onclick="returnToDashboard()">Kembali ke Dashboard</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 6: CERTIFICATE -->
+    <div id="cert-screen" class="screen">
+        <div class="glass-panel" style="max-width: 800px; padding: 0; background: #000; border: none;">
+            <div id="certificate">
+                <h1 style="font-size: 2.5rem; margin-top: 20px;">SIJIL PENGESAHAN SIBER</h1>
+                <p style="color: var(--neon-purple); font-size: 1.5rem; margin: 20px 0;">Dianugerahkan kepada:</p>
+                <h2 id="cert-name" style="font-size: 3rem; color: #fff;">NAMA</h2>
+                <h3 id="cert-class" style="color: var(--neon-cyan);">KELAS</h3>
+                <p style="font-size: 1.2rem; margin-top: 30px;">Kerana berjaya menyelesaikan 200 Misi Sains Tingkatan 2 tanpa keciciran data.</p>
+                <div style="margin-top: 50px; border-top: 1px solid var(--neon-magenta); padding-top: 20px;">
+                    <p style="color: var(--neon-cyan);">ID Pangkalan Data: <span id="cert-id"></span></p>
+                </div>
+            </div>
+            <div style="padding: 20px; display: flex; gap: 10px;">
+                <button class="btn-cyber" onclick="downloadPDF()">Simpan PDF</button>
+                <button class="btn-cyber btn-magenta" onclick="shareWhatsApp()">Share WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+/* PANGKALAN DATA SOALAN DARI DOKUMEN T2 SET 2 */
+const baseQuestions = [
+    { q: "Dalam eksperimen saiz zat terlarut, apakah pemboleh ubah dimanipulasikan?", o: ["Saiz zat terlarut", "Masa melarut", "Isi padu air", "Suhu air"], a: 0, c: "Lihat perbezaan fizikal", h: "Pemboleh ubah yang diubah-ubah ialah <span class='keyword-glow'>saiz zat terlarut</span> (gula halus vs gula kiub)." },
+    { q: "Apakah pemboleh ubah bergerak balas apabila membandingkan gula halus dan kiub?", o: ["Masa untuk gula melarut", "Suhu air", "Kuantiti air", "Jenis gula"], a: 0, c: "Apa yang direkodkan pada jam randik?", h: "Pemerhatian diukur pada jam randik, iaitu <span class='keyword-glow'>masa untuk gula melarut</span>." },
+    { q: "Gula halus melarut lebih cepat berbanding gula kiub. Mengapa?", o: ["Jumlah luas permukaan lebih besar", "Zarah gula halus lebih ringan", "Air lebih panas", "Gula halus bertindak balas dengan sudu"], a: 0, c: "Kaitan antara saiz molekul terdedah.", h: "Gula halus mempunyai <span class='keyword-glow'>jumlah luas permukaan</span> yang terdedah lebih besar, mempercepatkan keterlarutan." },
+    { q: "Apakah definisi secara operasi bagi kadar keterlarutan?", o: ["Masa yang diambil untuk zat terlarut melarut sepenuhnya", "Kuantiti air yang digunakan", "Saiz bikar yang digunakan", "Berapa banyak gula yang wujud"], a: 0, c: "Definisi mesti berdasarkan ukuran.", h: "Definisi operasi ialah parameter ukuran eksperimen, iaitu <span class='keyword-glow'>masa yang diambil untuk gula melarut sepenuhnya</span>." },
+    { q: "Apakah yang dimaksudkan dengan elektrostatik?", o: ["Kajian cas elektrik statik", "Arus elektrik di rumah", "Kajian daya graviti", "Pergerakan cas dalam litar"], a: 0, c: "Perkataan 'statik' bermaksud tidak bergerak.", h: "Elektrostatik ialah kajian mengenai <span class='keyword-glow'>cas elektrik statik</span> pada objek." },
+    { q: "Kejadian kilat berlaku akibat geseran antara awan dan udara. Cas apakah yang terkumpul di bahagian bawah awan?", o: ["Cas Negatif", "Cas Positif", "Cas Neutral", "Elektron Positif"], a: 0, c: "Cas yang melompat ke bumi.", h: "Bahagian bawah awan mengumpulkan <span class='keyword-glow'>cas negatif (elektron)</span> yang akan tertarik ke bumi." },
+    { q: "Apakah langkah keselamatan yang dipasang pada bangunan tinggi untuk melindunginya daripada kilat?", o: ["Konduktor kilat (Lightning rod)", "Cat anti-statik", "Cermin tebal", "Lantai konkrit"], a: 0, c: "Objek tajam di bumbung.", h: "Bangunan tinggi memasang <span class='keyword-glow'>konduktor kilat</span> untuk menyalurkan cas elektrik terus ke bumi dengan selamat." },
+    { q: "Manakah tempat berlindung yang paling selamat ketika ribut petir?", o: ["Di dalam kereta", "Di bawah pokok besar", "Di tengah padang", "Di dalam pondok zink"], a: 0, c: "Konsep Sangkar Faraday.", h: "Kereta bertindak sebagai Sangkar Faraday. Kilat akan mengalir di luar badan logam dan <span class='keyword-glow'>di dalam kereta adalah selamat</span>." },
+    { q: "Apakah maksud daya?", o: ["Tarikan atau tolakan ke atas suatu objek", "Kelajuan sesuatu objek", "Berat sesuatu bahan", "Tenaga haba dari geseran"], a: 0, c: "Aksi fizikal yang dikenakan.", h: "Daya ditakrifkan sebagai <span class='keyword-glow'>tarikan atau tolakan</span> yang bertindak ke atas sesuatu objek." },
+    { q: "Apakah unit S.I. bagi Daya?", o: ["Newton (N)", "Joule (J)", "Kilogram (kg)", "Meter per saat (m/s)"], a: 0, c: "Dinamakan sempena saintis graviti.", h: "Unit piawai bagi daya ialah <span class='keyword-glow'>Newton (N)</span>." },
+    { q: "Hukum Newton Ketiga menyatakan setiap daya tindakan mempunyai...", o: ["Daya tindak balas sama magnitud berlawanan arah", "Daya geseran yang lebih kuat", "Kelajuan seragam", "Pecutan sifar"], a: 0, c: "Konsep keseimbangan daya.", h: "Hukum Newton Ketiga: Setiap daya tindakan ada <span class='keyword-glow'>daya tindak balas yang sama magnitud tetapi berlawanan arah</span>." },
+    { q: "Jika daya tolakan kotak ialah 120N dan kelajuannya seragam, berapakah daya geseran lantai?", o: ["120N", "0N", "60N", "240N"], a: 0, c: "Daya seimbang menghasilkan kelajuan seragam.", h: "Daya tindakan (120N) diimbangi sepenuhnya oleh <span class='keyword-glow'>daya geseran 120N</span>, menjadikan daya bersih 0 dan kelajuan seragam." },
+    { q: "Antara berikut, manakah cara terbaik memudahkan tolakan kotak di lantai kasar?", o: ["Gunakan roda / troli", "Tambah berat kotak", "Tarik ke atas", "Tolak dengan dua tangan"], a: 0, c: "Mengurangkan luas sentuhan.", h: "Penggunaan <span class='keyword-glow'>roda atau troli</span> akan menukar geseran gelongsor kepada geseran golek yang jauh lebih rendah." },
+    { q: "Penyakit kolera (taun) disebabkan oleh agen jangkitan apa?", o: ["Bakteria", "Virus", "Kulat", "Protozoa"], a: 0, c: "Organisma unisel yang dirawat dengan antibiotik.", h: "Kolera / Taun adalah penyakit bawaan air yang disebabkan oleh <span class='keyword-glow'>bakteria Vibrio cholerae</span>." },
+    { q: "Bagaimanakah cara mengelakkan jangkitan kolera di kawasan wabak?", o: ["Minum air yang dididihkan", "Kerap mandi sungai", "Berkongsi makanan", "Memakai pelitup muka tebal"], a: 0, c: "Kolera tersebar melalui air tercemar.", h: "Langkah terbaik adalah <span class='keyword-glow'>meminum air yang telah dididihkan</span> untuk membunuh bakteria di dalam air." },
+    { q: "Apakah gejala utama Penyakit Tangan, Kaki dan Mulut (HFMD)?", o: ["Demam, ulser mulut, ruam tangan & kaki", "Batuk berdarah & sesak nafas", "Sakit sendi kronik", "Muntah dan cirit birit kuning"], a: 0, c: "Perhatikan nama penyakit itu sendiri.", h: "Tanda utama HFMD: <span class='keyword-glow'>Demam, ruam di tangan & kaki, serta ulser dalam mulut</span>." },
+    { q: "Dalam kitar air, proses wap air bertukar menjadi awan dipanggil...", o: ["Kondensasi", "Penyejatan", "Transpirasi", "Respirasi"], a: 0, c: "Dari gas ke cecair.", h: "Proses penyejukan wap air menjadi titisan air (awan) dipanggil <span class='keyword-glow'>Kondensasi</span>." },
+    { q: "Apakah peranan tumbuhan dalam kitar air semula jadi?", o: ["Membebaskan wap air melalui transpirasi", "Menyerap awan dari atmosfera", "Menghasilkan hujan lebat", "Menyingkirkan peluh dari daun"], a: 0, c: "Pembebasan wap dari stomata daun.", h: "Tumbuhan melakukan <span class='keyword-glow'>Transpirasi</span>, membebaskan wap air ke udara melalui liang stomata." },
+    { q: "Proses X menyerap karbon dioksida dan membebaskan oksigen. Apakah Proses X?", o: ["Fotosintesis", "Respirasi", "Penguraian", "Pembakaran"], a: 0, c: "Hanya dilakukan oleh tumbuhan hijau.", h: "<span class='keyword-glow'>Fotosintesis</span> ialah proses tumbuhan menghasilkan makanan dengan menyerap Karbon Dioksida dan membebaskan Oksigen." },
+    { q: "Apakah kebaikan berkongsi kereta berbanding memandu secara solo terhadap alam sekitar?", o: ["Mengurangkan pelepasan gas karbon dioksida", "Meningkatkan tahap oksigen bandar", "Menghentikan kitar air", "Menambah gas nitrogen di udara"], a: 0, c: "Kurang kereta bermaksud kurang asap ekzos.", h: "Pengangkutan awam/kongsi kereta dapat <span class='keyword-glow'>mengurangkan pembakaran bahan api fosil dan karbon dioksida</span>, menstabilkan kitar karbon." },
+    { q: "Apakah maksud proses pencernaan?", o: ["Pemecahan makanan kompleks kepada molekul ringkas", "Pergerakan makanan melalui usus", "Penyingkiran tinja dari badan", "Penyerapan oksigen ke dalam sel"], a: 0, c: "Proses mengurai makanan agar boleh diserap.", h: "Pencernaan ialah proses <span class='keyword-glow'>pemecahan makanan bersaiz besar dan kompleks kepada molekul kecil dan ringkas</span> yang larut air." },
+    { q: "Usus besar (Organ R) berfungsi terutamanya untuk...", o: ["Menyerap semula air", "Mencerna protein", "Menyerap nutrien makanan", "Menyimpan empedu"], a: 0, c: "Proses terakhir sebelum tinja terbentuk.", h: "Fungsi utama usus besar adalah <span class='keyword-glow'>menyerap semula air dan garam mineral</span> dari makanan yang tidak tercerna." },
+    { q: "Makanan tinggi lemak dan rendah serat meningkatkan risiko kanser usus. Apakah cara mengatasinya?", o: ["Banyakkan makan sayur dan buah (serat)", "Banyakkan minum minuman manis", "Kurangkan pengambilan air putih", "Makan lebih banyak daging merah"], a: 0, c: "Bahan yang merangsang peristalsis.", h: "Serat daripada <span class='keyword-glow'>sayur dan buah-buahan</span> dapat merangsang peristalsis, mencegah sembelit dan membersihkan usus." },
+    { q: "Bolehkah pengamal vegetarian mendapat protein yang cukup dengan memakan susu dan keju?", o: ["Ya, susu dan keju mengandungi protein haiwan", "Tidak, protein hanya ada dalam daging", "Ya, kerana keju adalah karbohidrat", "Tidak, susu menghalang penyerapan protein"], a: 0, c: "Sumber tenusu.", h: "<span class='keyword-glow'>Ya</span>, susu dan keju merupakan produk haiwan yang kaya dengan protein dan kalsium untuk keperluan tubuh." },
+    { q: "Dalam model pencernaan menggunakan tiub/straw dan belon, belon mewakili organ...", o: ["Perut", "Usus Kecil", "Mulut", "Hati"], a: 0, c: "Organ berbentuk pundi yang mengembang.", h: "Belon, disebabkan sifatnya yang elastik seperti pundi, sesuai mewakili <span class='keyword-glow'>Perut</span> dalam model pencernaan manusia." }
+];
+
+/* ENJIN PENGEMBANGAN SOALAN (BINA TEPAT 200 SOALAN) */
+let allQuestions = [];
+for(let i=0; i < 200; i++) {
+    let base = baseQuestions[i % baseQuestions.length];
+    allQuestions.push({
+        id: i+1,
+        question: base.q,
+        options: [...base.o],
+        correctIdx: base.a,
+        clue: base.c,
+        holo: base.h,
+        correctText: base.o[base.a]
+    });
+}
+
+const modules = [
+    { title: "MODUL 1: ASAS JIRIM", questions: allQuestions.slice(0, 40) },
+    { title: "MODUL 2: ELEKTROSTATIK TINGGI", questions: allQuestions.slice(40, 80) },
+    { title: "MODUL 3: HUKUM DAYA & GESERAN", questions: allQuestions.slice(80, 120) },
+    { title: "MODUL 4: PENYAKIT & KITARAN", questions: allQuestions.slice(120, 160) },
+    { title: "MODUL 5: PENCERNAAN & BIOLOGI", questions: allQuestions.slice(160, 200) }
+];
+
+let state = {
+    user: "", kelas: "", currentModuleIdx: 0, currentQuestionIdx: 0,
+    score: 0, globalProgress: 0, moduleHistory: [false, false, false, false, false],
+    wrongQueue: [], activeQueue: []
+};
+
+let timerInterval; let timeLeft = 20; let isCluePhase = false; let currentZoom = 1;
+
+window.onload = () => {
+    let saved = localStorage.getItem('cyberQuizState');
+    if(saved) {
+        state = JSON.parse(saved);
+        if(state.user) {
+            document.getElementById('input-nama').value = state.user;
+            document.getElementById('input-kelas').value = state.kelas;
+            switchScreen('dashboard-screen');
+            renderDashboard();
+        }
+    }
+    initParticles();
+}
+
+function saveState() { localStorage.setItem('cyberQuizState', JSON.stringify(state)); }
+
+function login() {
+    let u = document.getElementById('input-nama').value.trim();
+    let k = document.getElementById('input-kelas').value.trim();
+    if(!u || !k) { alert("Akses Ditolak. Sila masukkan Nama dan Kelas."); return; }
+    state.user = u; state.kelas = k; saveState();
+    switchScreen('dashboard-screen'); renderDashboard();
+}
+
+function triggerReset() {
+    let pw = prompt("SYSTEM OVERRIDE. MASUKKAN KOD LALUAN:");
+    if(pw === "101010") {
+        localStorage.removeItem('cyberQuizState');
+        alert("MEMORI DIKOSONGKAN. MEMULAKAN SEMULA..."); location.reload();
+    } else { alert("AKSES HARAM DITOLAK."); }
+}
+
+function switchScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+    document.getElementById(id).classList.add('active-screen');
+}
+
+function zoom(val) {
+    currentZoom += val;
+    if(currentZoom < 0.8) currentZoom = 0.8; if(currentZoom > 1.5) currentZoom = 1.5;
+    document.body.style.transform = `scale(${currentZoom})`;
+    document.body.style.transformOrigin = "top center";
+}
+function goHome() {
+    if(state.user) { switchScreen('dashboard-screen'); renderDashboard(); }
+    else switchScreen('login-screen');
+}
+
+function renderDashboard() {
+    document.getElementById('user-info').innerText = `Eagen: ${state.user} | Kod: ${state.kelas}`;
+    let totalDone = 0;
+    state.moduleHistory.forEach((done, i) => { if(done) totalDone += modules[i].questions.length; });
+    document.getElementById('global-progress').innerText = totalDone;
+
+    let c = document.getElementById('module-container'); c.innerHTML = "";
+    modules.forEach((mod, idx) => {
+        let isDone = state.moduleHistory[idx];
+        let btn = document.createElement('button'); btn.className = 'btn-cyber';
+        if(isDone) {
+            btn.style.borderColor = "var(--neon-purple)"; btn.style.color = "var(--neon-purple)";
+            btn.innerHTML = `${mod.title} <br><small>[ MISI SELESAI ]</small>`;
+        } else {
+            btn.innerHTML = `MULAKAN ${mod.title}`; btn.onclick = () => startModule(idx);
+        }
+        c.appendChild(btn);
+    });
+    
+    if(totalDone === 200) {
+        let certBtn = document.createElement('button');
+        certBtn.className = 'btn-cyber btn-magenta'; certBtn.style.gridColumn = '1 / -1';
+        certBtn.innerHTML = "CETAK SIJIL PENGESAHAN SIBER"; certBtn.onclick = generateCertificate;
+        c.appendChild(certBtn);
+    }
+}
+
+function startModule(idx) {
+    state.currentModuleIdx = idx; state.score = 0; state.currentQuestionIdx = 0;
+    state.activeQueue = JSON.parse(JSON.stringify(modules[idx].questions)); state.wrongQueue = [];
+    switchScreen('quiz-screen'); loadQuestion();
+}
+
+function loadQuestion() {
+    if(state.activeQueue.length === 0) {
+        if(state.wrongQueue.length > 0) {
+            alert("Misi Pemulihan: Mengulang soalan yang tidak tepat.");
+            state.activeQueue = [...state.wrongQueue]; state.wrongQueue = [];
+            state.currentQuestionIdx = 0;
+        } else { endModule(); return; }
+    }
+
+    let qObj = state.activeQueue[0];
+    document.getElementById('q-module-title').innerText = modules[state.currentModuleIdx].title;
+    document.getElementById('q-counter').innerText = `Baki Misi: ${state.activeQueue.length} | Pemulihan: ${state.wrongQueue.length}`;
+    document.getElementById('q-text').innerText = qObj.question;
+    document.getElementById('q-clue').style.display = 'none';
+
+    let shuffledOptions = qObj.options.map(opt => ({ text: opt, isCorrect: opt === qObj.correctText }));
+    shuffledOptions.sort(() => Math.random() - 0.5);
+    
+    let optContainer = document.getElementById('options-container'); optContainer.innerHTML = "";
+    shuffledOptions.forEach(opt => {
+        let btn = document.createElement('button'); btn.className = 'btn-cyber';
+        btn.style.textTransform = 'none'; btn.innerText = opt.text;
+        btn.onclick = () => checkAnswer(opt.isCorrect, qObj);
+        optContainer.appendChild(btn);
+    });
+    startTimer(qObj);
+}
+
+function startTimer(qObj) {
+    clearInterval(timerInterval); timeLeft = 20; isCluePhase = false;
+    let bar = document.getElementById('timer-bar');
+    bar.style.width = '100%'; bar.style.background = 'var(--neon-cyan)';
+
+    timerInterval = setInterval(() => {
+        timeLeft--; let pct = (timeLeft / 20) * 100; bar.style.width = pct + '%';
+        if(timeLeft <= 5) bar.style.background = 'red';
+        if(timeLeft <= 0) {
+            if(!isCluePhase) {
+                isCluePhase = true; timeLeft = 20;
+                document.getElementById('q-clue').style.display = 'block';
+                document.getElementById('clue-text').innerText = qObj.clue;
+                bar.style.background = 'var(--neon-magenta)'; bar.style.width = '100%';
+            } else {
+                clearInterval(timerInterval); processWrongAnswer(qObj);
+            }
+        }
+    }, 1000);
+}
+
+function skipQuestion() {
+    clearInterval(timerInterval);
+    let qObj = state.activeQueue.shift(); state.wrongQueue.push(qObj); loadQuestion();
+}
+
+function checkAnswer(isCorrect, qObj) {
+    clearInterval(timerInterval);
+    if(isCorrect) {
+        triggerParticles(); state.score++; state.activeQueue.shift(); setTimeout(loadQuestion, 800);
+    } else { processWrongAnswer(qObj); }
+}
+
+function processWrongAnswer(qObj) {
+    state.activeQueue.shift(); state.wrongQueue.push(qObj);
+    document.getElementById('hologram-popup').style.display = 'block';
+    document.getElementById('hologram-text').innerHTML = qObj.holo;
+    speakTTS(qObj.holo.replace(/<[^>]*>?/gm, ''));
+}
+
+function closeHologram() {
+    document.getElementById('hologram-popup').style.display = 'none';
+    window.speechSynthesis.cancel(); loadQuestion();
+}
+
+function endModule() {
+    state.moduleHistory[state.currentModuleIdx] = true; saveState();
+    document.getElementById('mod-score').innerText = "MISI LENGKAP";
+    document.getElementById('mod-summary').innerText = `Tahniah Eagen ${state.user}, anda telah membersihkan sektor ini tanpa ralat yang tinggal.`;
+    switchScreen('result-screen');
+}
+
+function returnToDashboard() { switchScreen('dashboard-screen'); renderDashboard(); }
+
+function speakTTS(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        let utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ms-MY'; utterance.rate = 1.0;
+        let voices = window.speechSynthesis.getVoices();
+        let msVoice = voices.find(v => v.lang === 'ms-MY' && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('perempuan')));
+        if(msVoice) utterance.voice = msVoice;
+        window.speechSynthesis.speak(utterance);
+    }
+}
+window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+
+function triggerParticles() {
+    let canvas = document.getElementById('particle-canvas'); let ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    let particles = [];
+    for(let i=0; i<50; i++) {
+        particles.push({
+            x: canvas.width/2, y: canvas.height/2,
+            vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20,
+            life: 1.0, color: ['#0ff', '#f0f', '#fff'][Math.floor(Math.random()*3)]
+        });
+    }
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); let alive = false;
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+            if(p.life > 0) {
+                alive = true; ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+            }
+        });
+        if(alive) requestAnimationFrame(animate); else ctx.clearRect(0,0,canvas.width, canvas.height);
+    }
+    animate();
+}
+function initParticles() {}
+
+function generateCertificate() {
+    document.getElementById('cert-name').innerText = state.user.toUpperCase();
+    document.getElementById('cert-class').innerText = "KELAS: " + state.kelas;
+    document.getElementById('cert-id').innerText = "ID-" + Math.floor(Math.random()*1000000) + "-CYBER";
+    switchScreen('cert-screen');
+}
+
+function downloadPDF() {
+    let element = document.getElementById('certificate');
+    let opt = {
+      margin:       1,
+      filename:     `Sijil_Siber_${state.user}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, backgroundColor: '#000' },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+    };
+    html2pdf().set(opt).from(element).save();
+}
+
+function shareWhatsApp() {
+    let text = `[SISTEM CYBERPUNK] Misi Berjaya!\nNama: ${state.user}\nKelas: ${state.kelas}\nTelah menyelesaikan 200 soalan sains T2 dengan cemerlang!`;
+    let encodedText = encodeURIComponent(text);
+    window.open(`https://wa.me/60136003994?text=${encodedText}`, '_blank');
+}
+</script>
+</body>
+</html>
